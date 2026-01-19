@@ -1,4 +1,4 @@
-# Firefly III Data Importer
+# Firefly III Data Importer with Basiq Integration
 
 [![Packagist][packagist-shield]][packagist-url]
 [![License][license-shield]][license-url]
@@ -32,6 +32,52 @@
 
 "Firefly III" is a (self-hosted) manager for your personal finances. It can help you keep track of your expenses and income, so you can spend less and save more. The **Firefly III Data Importer** is built to help you import transactions into Firefly III. It is separated from Firefly III for security and maintenance reasons.
 
+This version includes integration with **Basiq**, allowing you to import data directly from Australian banks.
+
+## Basiq Integration Setup
+
+To use the Basiq integration, you will need a Basiq API Key.
+
+### Environment Variables
+
+You can configure the Basiq integration using the following environment variable:
+
+*   `BASIQ_API_KEY`: Your Basiq API Key. If provided here, you won't need to enter it in the web interface.
+
+### Persistence
+
+The Basiq integration requires persistent storage to remember your Basiq User ID and connected banks, so you don't have to re-authenticate every time you run an import.
+
+This is handled via a SQLite database located at `database/database.sqlite`. When running via Docker, ensure you mount a volume to persist this file.
+
+### Docker Usage
+
+You can build and run the importer using the provided `Dockerfile`.
+
+**Build:**
+
+```bash
+docker build -t firefly-iii-data-importer .
+```
+
+**Run:**
+
+```bash
+docker run -d \
+  -p 8080:80 \
+  -e FIREFLY_III_URL=http://your-firefly-instance \
+  -e FIREFLY_III_ACCESS_TOKEN=your-access-token \
+  -e BASIQ_API_KEY=your-basiq-api-key \
+  -e DB_CONNECTION=sqlite \
+  -e DB_DATABASE=/var/www/html/database/database.sqlite \
+  -v $(pwd)/database:/var/www/html/database \
+  firefly-iii-data-importer
+```
+
+**Note:** Ensure the `database` directory exists on your host and is writable by the container user (typically `www-data`, uid 33). You may need to run `chown -R 33:33 database` on your host.
+
+## About the original project
+
 The data importer does not connect to your bank directly. Instead, it uses [third party data providers](https://docs.firefly-iii.org/how-to/data-importer/import/third-party-providers/) to help you import data into Firefly III. Some of these providers are free of charge, others charge money.
 
 If you do not want to rely on third parties to import your data, you can import data using the following file formats:
@@ -49,6 +95,7 @@ Eager to get started? Go to [the documentation](https://docs.firefly-iii.org/)!
 ## Features
 
 * Import from many banks using third party data providers
+* **New: Import from Australian banks via Basiq**
 * Import over the command line for easy automation
 * Import over an API for easy automation
 * Use rules and data mapping for transaction clarity
