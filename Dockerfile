@@ -1,3 +1,16 @@
+# Multi-stage build to compile frontend assets
+FROM node:22-alpine AS frontend
+
+WORKDIR /app
+
+# Copy all files
+COPY . .
+
+# Install dependencies and build assets
+RUN npm install
+RUN npm run build --workspace=resources/js/v2
+
+# Final stage
 FROM php:8.4-apache
 
 # Install dependencies
@@ -21,11 +34,14 @@ WORKDIR /var/www/html
 # Copy existing application directory contents
 COPY . /var/www/html
 
+# Copy built frontend assets from the frontend stage
+COPY --from=frontend /app/public/build /var/www/html/public/build
+
 # Install dependencies
 RUN composer install --no-dev --optimize-autoloader
 
 # Set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public/build
 
 # Configure Apache DocumentRoot
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
