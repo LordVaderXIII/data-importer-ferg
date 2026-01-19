@@ -205,6 +205,12 @@ class ImportJobRepository
 
                 break;
 
+            case 'basiq':
+                $configuration = $importJob->getConfiguration();
+                $configuration->setDuplicateDetectionMethod('cell');
+
+                break;
+
             default:
                 $messageBag->add('importable_file', sprintf('Cannot yet process import flow "%s"', $importJob->getFlow()));
                 $messageBag->add('config_file', sprintf('Cannot yet process import flow "%s"', $importJob->getFlow()));
