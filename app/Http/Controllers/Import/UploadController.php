@@ -204,6 +204,14 @@ class UploadController extends Controller
                 Log::debug('No extra steps for Lunch Flow.');
 
                 break;
+
+            case 'basiq':
+                // Check if we need to authenticate first
+                if (\App\Services\Basiq\Authentication\SecretManager::getApiKey() === '') {
+                    return redirect()->route('basiq-authenticate.index', [$importJob->identifier]);
+                }
+                // Redirect to connection page
+                return redirect()->route('basiq-connect.index', [$importJob->identifier]);
         }
 
         // stop again if any errors:

@@ -26,6 +26,7 @@ namespace App\Http\Controllers\Import;
 
 use App\Exceptions\ImporterErrorException;
 use App\Http\Controllers\Controller;
+use App\Services\Basiq\AuthenticationValidator as BasiqValidator;
 use App\Services\Enums\AuthenticationStatus;
 use App\Services\LunchFlow\AuthenticationValidator as LunchFlowValidator;
 use App\Services\Nordigen\AuthenticationValidator as NordigenValidator;
@@ -112,6 +113,8 @@ class AuthenticateController extends Controller
 
             case 'sophtron':
                 return new SophtronValidator();
+            case 'basiq':
+                return new BasiqValidator();
         }
 
         return null;

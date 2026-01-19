@@ -53,6 +53,10 @@ return [
     'help_spectre_app_id'           => 'Enter your Spectre / Salt Edge App Id',
     'help_spectre_secret'           => 'Spectre / Salt Edge Secret',
 
+    'label_basiq_api_key'           => 'Basiq API Key',
+    'placeholder_basiq_api_key'     => 'Basiq API Key',
+    'help_basiq_api_key'            => 'Enter your Basiq API Key',
+
     // column roles for CSV import:
     'column__ignore'                => '(ignore this column)',
     'column_account-iban'           => 'Asset account (IBAN)',

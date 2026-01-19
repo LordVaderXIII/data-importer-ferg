@@ -307,6 +307,36 @@ class ImportServiceAccount
         return $return;
     }
 
+    public static function convertBasiqArray(array $basiqAccounts): array
+    {
+        $return = [];
+
+        foreach ($basiqAccounts as $account) {
+            // Basiq account structure is array, not object
+            $accountType = $account['class']['type'] ?? 'unknown';
+            $accountNo   = $account['accountNo'] ?? '';
+
+            $return[] = self::fromArray(
+                [
+                    'id'            => (string)$account['id'],
+                    'name'          => $account['name'] ?? 'Basiq Account',
+                    'currency_code' => $account['currency'] ?? 'AUD',
+                    'iban'          => '',
+                    'bban'          => $accountNo,
+                    'status'        => $account['status'] ?? 'active',
+                    'extra'         => [
+                        'Type'     => $accountType,
+                        'Balance'  => $account['balance'] ?? '0.00',
+                        'Number'   => $accountNo,
+                        'Bank'     => $account['institution']['id'] ?? 'Unknown Bank',
+                    ],
+                ]
+            );
+        }
+
+        return $return;
+    }
+
     public static function convertSpectreArray(array $spectre): array
     {
         $return = [];
