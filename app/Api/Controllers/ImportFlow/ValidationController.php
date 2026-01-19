@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace App\Api\Controllers\ImportFlow;
 
 use App\Api\Controllers\Controller;
+use App\Services\Basiq\AuthenticationValidator as BasiqValidator;
 use App\Services\Enums\AuthenticationStatus;
 use App\Services\LunchFlow\AuthenticationValidator as LunchFlowValidator;
 use App\Services\Nordigen\AuthenticationValidator as NordigenValidator;
@@ -41,9 +42,27 @@ class ValidationController extends Controller
             'simplefin'              => $this->validateSimpleFIN(),
             'lunchflow'              => $this->validateLunchFlow(),
             'sophtron'               => $this->validateSophtron(),
+            'basiq'                  => $this->validateBasiq(),
             'file'                   => response()->json(['result' => 'OK']),
             default                  => response()->json(['result' => 'NOK', 'message' => 'Unknown provider']),
         };
+    }
+
+    private function validateBasiq(): JsonResponse
+    {
+        $validator = new BasiqValidator();
+        $result    = $validator->validate();
+
+        if (AuthenticationStatus::ERROR === $result) {
+            // send user error:
+            return response()->json(['result' => 'NOK']);
+        }
+        if (AuthenticationStatus::NODATA === $result) {
+            // send user error:
+            return response()->json(['result' => 'NODATA']);
+        }
+
+        return response()->json(['result' => 'OK']);
     }
 
     public function validateGoCardless(): JsonResponse

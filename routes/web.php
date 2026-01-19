@@ -47,6 +47,13 @@ Route::post('/gocardless-select-bank/{identifier}', ['uses' => 'Import\Nordigen\
 Route::get('/gocardless-connect/{identifier}', ['uses' => 'Import\Nordigen\LinkController@build', 'as' => 'gocardless-connect.index']);
 Route::get('/gocardless-connected/{identifier}', ['uses' => 'Import\Nordigen\LinkController@callback', 'as' => 'gocardless-connect.callback']);
 
+// Basiq Custom Flow
+Route::get('/basiq-authenticate/{identifier}', ['uses' => 'Import\Basiq\AuthenticateController@index', 'as' => 'basiq-authenticate.index']);
+Route::post('/basiq-authenticate/{identifier}', ['uses' => 'Import\Basiq\AuthenticateController@postIndex', 'as' => 'basiq-authenticate.post']);
+Route::get('/basiq-connect/{identifier}', ['uses' => 'Import\Basiq\ConnectionController@index', 'as' => 'basiq-connect.index']);
+Route::post('/basiq-connect/{identifier}', ['uses' => 'Import\Basiq\ConnectionController@connect', 'as' => 'basiq-connect.post']);
+Route::get('/basiq-connect-callback/{identifier}', ['uses' => 'Import\Basiq\ConnectionController@callback', 'as' => 'basiq-connect.callback']);
+
 Route::get('/configure-roles/{identifier}', ['uses' => 'Import\File\RoleController@index', 'as' => 'configure-roles.index']);
 Route::post('/configure-roles/{identifier}', ['uses' => 'Import\File\RoleController@postIndex', 'as' => 'configure-roles.post']);
 

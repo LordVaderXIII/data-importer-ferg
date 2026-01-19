@@ -133,7 +133,7 @@ return [
         ],
         'basiq'     => [
             'title'                     => 'basiq.io',
-            'enabled'                   => false,
+            'enabled'                   => true,
             'conversion_before_mapping' => true,
             'explanation'               => '',
             'supports_new_accounts'     => true,
