@@ -1,14 +1,17 @@
 #!/bin/bash
 set -e
 
-# Create database file if not exists
-if [ ! -f /var/www/html/database/database.sqlite ]; then
-    touch /var/www/html/database/database.sqlite
-    chown www-data:www-data /var/www/html/database/database.sqlite
+# Ensure database directory permissions
+if [ -d "/app/database" ]; then
+    # We can't use chown if we are not root or if the volume is mounted with specific permissions.
+    # But usually in Docker we run as root unless specified otherwise.
+    # The PHP image used www-data, but alpine runs as root by default.
+    :
 fi
 
-# Run migrations
-php artisan migrate --force
+# Create database file if it doesn't exist, to ensure permissions are right when created
+if [ ! -f "/app/database/database.sqlite" ]; then
+    touch /app/database/database.sqlite
+fi
 
-# Start Apache
 exec "$@"
