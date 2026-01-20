@@ -1,50 +1,61 @@
-# AGENTS.md
+# FIDI - Firefly III Data Importer (Basiq Edition)
 
-This file describes the tools and agents in this repository to help Jules and other agents work effectively.
+This repository contains a specialized data importer for Firefly III, integrated with the Basiq API for Australian banks. It has been rewritten in Go for performance, simplicity, and ease of deployment.
 
-## Repository Overview
+## Architecture
 
-This repository is a clone of the Firefly III Data Importer (FIDI). It is a Laravel-based application designed to import financial data into [Firefly III](https://github.com/firefly-iii/firefly-iii).
+*   **Language:** Go (Golang) 1.22+
+*   **Database:** SQLite (Embedded via `modernc.org/sqlite`, CGO-free)
+*   **Web Framework:** Standard `net/http` with `html/template`.
+*   **Frontend:** HTMX + TailwindCSS (CDN).
+*   **Deployment:** Docker (Alpine based).
 
-## Key Components
+## Directory Structure
 
-*   **Import Flows:** The application supports various "flows" for importing data (e.g., CSV, Nordigen, Spectre, PayPal, etc.). These are located in `app/Services/{FlowName}`.
-*   **Job Management:** Imports are managed as "Jobs". `app/Models/ImportJob` and `app/Repository/ImportJob/ImportJobRepository.php` handle the state and persistence of these jobs.
-*   **Controllers:** `app/Http/Controllers/Import` contains the controllers for the multi-step import wizard.
-*   **Configuration:** `app/Services/Shared/Configuration/Configuration.php` manages the import configuration.
+*   `cmd/server`: Application entry point.
+*   `internal/basiq`: Basiq API client (Auth, Accounts, Transactions).
+*   `internal/firefly`: Firefly III API client.
+*   `internal/server`: HTTP handlers and synchronization logic.
+*   `internal/storage`: SQLite database wrapper (KV store & Mappings).
+*   `web/templates`: HTML templates.
+*   `web/static`: Static assets.
 
-## Development Guidelines
+## Setup & Configuration
 
-### Adding a New Integration (e.g., Basiq)
+The application requires the following environment variables:
 
-1.  **Service Layer:** Create a new directory in `app/Services/` (e.g., `app/Services/Basiq`).
-    *   Implement authentication and token management.
-    *   Implement data retrieval (accounts, transactions).
-    *   Implement a `NewJobDataCollector` if necessary to gather initial data.
-2.  **Routes:** Add routes in `routes/web.php` for the authentication flow (e.g., redirecting to the provider, handling callbacks).
-3.  **Controllers:** Create controllers in `app/Http/Controllers/Import/Basiq` to handle the specific steps.
-4.  **Integration:**
-    *   Update `app/Repository/ImportJob/ImportJobRepository.php` to handle the new flow in `parseImportJob`.
-    *   Update `app/Http/Controllers/Import/UploadController.php` or `AuthenticateController.php` to initiate the flow.
+*   `BASIQ_API_KEY`: Your Basiq API key.
+*   `FIREFLY_III_URL`: URL to your Firefly III instance (e.g., `http://192.168.1.10:8080`).
+*   `FIREFLY_III_ACCESS_TOKEN`: Personal Access Token from Firefly III.
+*   `DB_PATH`: Path to SQLite database (default: `database/database.sqlite`).
 
-### Testing
+### Docker
 
-*   Run tests using `php artisan test`.
-*   Ensure environment variables are set correctly for integration tests.
+The Docker image uses a multi-stage build to produce a small Alpine-based image.
 
-### Code Style
+```bash
+docker build -t fidi .
+docker run -d \
+  -p 80:80 \
+  -v $(pwd)/database:/app/database \
+  -e BASIQ_API_KEY=your_key \
+  -e FIREFLY_III_URL=http://your_firefly \
+  -e FIREFLY_III_ACCESS_TOKEN=your_token \
+  fidi
+```
 
-*   Follow PSR-12 coding standards.
-*   Strict typing is encouraged (`declare(strict_types=1);`).
+## Agents & Development
 
-### Basiq Integration Specifics
+This file (`AGENTS.md`) serves as a guide for AI agents and developers.
 
-*   **API Key:** Can be provided via UI or `.env` (`BASIQ_API_KEY`).
-*   **User Persistence:** Basiq `userId` should be persisted to avoid re-linking accounts. This is stored in a local SQLite database.
-*   **Mappings:** Account mappings should be persistent.
-*   **Duplication:** Rely on Firefly III's built-in transaction duplicate detection.
+*   **Go Code:** Run `go build -o fidi ./cmd/server` to build.
+*   **Tests:** Run `go test ./...` to run all tests.
+*   **Database:** The application automatically handles schema migrations on startup. Legacy tables from previous PHP versions are wiped if detected.
+*   **Frontend:** Edit templates in `web/templates`. No build step required (Tailwind is loaded via CDN for simplicity, or can be added to static).
 
-## Tools & Utilities
+## Usage
 
-*   `artisan`: Laravel's command-line interface. Use it for migrations, serving the app, etc.
-*   `composer`: Dependency manager.
+1.  **Dashboard:** Access the web UI at `http://localhost`.
+2.  **Connect:** Enter your email/mobile to create a Basiq User and link your bank.
+3.  **Map:** Map your Basiq accounts to Firefly III accounts.
+4.  **Sync:** Click "Sync Now" to import transactions immediately. A daily schedule runs automatically.

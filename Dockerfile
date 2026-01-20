@@ -1,63 +1,50 @@
-# Multi-stage build to compile frontend assets
-FROM node:22-alpine AS frontend
+# Build Stage
+FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
 
-# Copy all files
+# Install build dependencies
+RUN apk add --no-cache git
+
+# Copy go mod and sum files
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy source code
 COPY . .
 
-# Install dependencies and build assets
-RUN npm install
-RUN npm run build --workspace=resources/js/v2
+# Build the application
+# CGO_ENABLED=0 for static binary (modernc.org/sqlite supports this)
+RUN CGO_ENABLED=0 GOOS=linux go build -o fidi ./cmd/server
 
-# Final stage
-FROM php:8.4-apache
+# Final Stage
+FROM alpine:latest
 
-# Install dependencies
-RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    unzip \
-    sqlite3 \
-    libsqlite3-dev \
-    libicu-dev \
-    && docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath intl pdo_sqlite
+WORKDIR /app
 
-# Install Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Install runtime dependencies
+RUN apk add --no-cache ca-certificates tzdata bash
 
-# Set working directory
-WORKDIR /var/www/html
+# Create database directory
+RUN mkdir -p /app/database
 
-# Copy existing application directory contents
-COPY . /var/www/html
+# Copy binary from builder
+COPY --from=builder /app/fidi /usr/local/bin/fidi
 
-# Copy built frontend assets from the frontend stage
-COPY --from=frontend /app/public/build /var/www/html/public/build
+# Copy templates and static files (if they are not embedded, but I will embed them later.
+# For now assuming they are on disk as per plan "web/templates").
+# Actually, the plan says "web/templates". I should copy them.
+COPY web /app/web
 
-# Install dependencies
-RUN composer install --no-dev --optimize-autoloader
-
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database /var/www/html/public/build
-
-# Configure Apache DocumentRoot
-ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
-
-# Enable rewrite module
-RUN a2enmod rewrite
-
-# Create SQLite database file if it doesn't exist
-RUN touch /var/www/html/database/database.sqlite
-RUN chown www-data:www-data /var/www/html/database/database.sqlite
-
-# Entrypoint script to run migrations
+# Copy entrypoint
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
+# Environment variables
+ENV PORT=80
+
+# Expose port
+EXPOSE 80
+
 ENTRYPOINT ["docker-entrypoint.sh"]
-CMD ["apache2-foreground"]
+CMD ["fidi"]

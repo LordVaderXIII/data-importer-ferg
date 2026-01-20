@@ -1,0 +1,33 @@
+{{define "content"}}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-lg font-semibold mb-4">Status</h2>
+        <div class="mb-4">
+            <p class="text-sm text-gray-600">Basiq Connection:</p>
+            {{if .BasiqConnected}}
+                <span class="text-green-600 font-bold">Connected (User: {{.BasiqUserID}})</span>
+            {{else}}
+                <span class="text-red-600 font-bold">Not Connected</span>
+                <a href="/connect" class="ml-2 text-blue-600 hover:underline">Connect</a>
+            {{end}}
+        </div>
+        <div class="mb-4">
+            <p class="text-sm text-gray-600">Last Sync:</p>
+            <p class="font-medium">{{.LastRun}}</p>
+            <p class="text-xs text-gray-500">{{.LastRunStatus}}</p>
+        </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-lg font-semibold mb-4">Actions</h2>
+        {{if .BasiqConnected}}
+            <button hx-post="/sync" hx-swap="innerHTML" hx-target="#sync-result" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+                Sync Now
+            </button>
+            <div id="sync-result" class="mt-4 text-sm"></div>
+        {{else}}
+            <p class="text-gray-500">Please connect Basiq first.</p>
+        {{end}}
+    </div>
+</div>
+{{end}}
