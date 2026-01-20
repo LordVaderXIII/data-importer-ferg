@@ -23,11 +23,20 @@ class ConnectionManager
         $fireflyUrl = SharedSecretManager::getBaseUrl();
         // Assuming single user for now, as firefly_user_id is nullable/not easily available without full OAuth flow info
 
-        $record = DB::table('basiq_users')
-            ->where('firefly_instance_url', $fireflyUrl)
-            ->first();
+        try {
+            $record = DB::table('basiq_users')
+                ->where('firefly_instance_url', $fireflyUrl)
+                ->first();
 
-        return $record ? $record->basiq_user_id : null;
+            return $record ? $record->basiq_user_id : null;
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Check if the error is due to missing table
+            if (str_contains($e->getMessage(), 'no such table: basiq_users')) {
+                Log::warning('Basiq users table missing. Migration may not have run.');
+                return null;
+            }
+            throw $e;
+        }
     }
 
     public function createBasiqUser(string $email = null, string $mobile = null): string
@@ -37,6 +46,11 @@ class ConnectionManager
         $userId = $user['id'];
 
         $fireflyUrl = SharedSecretManager::getBaseUrl();
+
+        // Ensure table exists before inserting?
+        // We can't easily run migrations here.
+        // If the table is missing, this will throw.
+        // But getBasiqUserId will return null, so the controller will call this method.
 
         DB::table('basiq_users')->updateOrInsert(
             ['firefly_instance_url' => $fireflyUrl],
