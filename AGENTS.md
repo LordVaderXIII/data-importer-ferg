@@ -4,7 +4,7 @@ This repository contains a specialized data importer for Firefly III, integrated
 
 ## Architecture
 
-*   **Language:** Go (Golang) 1.22+
+*   **Language:** Go (Golang) 1.24+
 *   **Database:** SQLite (Embedded via `modernc.org/sqlite`, CGO-free)
 *   **Web Framework:** Standard `net/http` with `html/template`.
 *   **Frontend:** HTMX + TailwindCSS (CDN).
